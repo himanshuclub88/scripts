@@ -234,13 +234,13 @@ git --version
 Clone the repository:
 
 ```powershell
-git clone <REPOSITORY-URL>
+git clone https://github.com/himanshuclub88/scripts.git
 ```
 
 Enter the repository:
 
 ```powershell
-cd <REPOSITORY-FOLDER>
+cd scripts
 ```
 
 The repository contains the utility files:
