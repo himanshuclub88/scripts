@@ -1,4 +1,3 @@
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 param(
     [string]$VenvName = ".venv",
     [string]$Requirements = "requirements.txt"

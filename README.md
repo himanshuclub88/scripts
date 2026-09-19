@@ -51,6 +51,13 @@ and installs the dependencies from:
 C:\Projects\my-ai-app\requirements.txt
 ```
 
+
+Alawys do before using (one time only) recomended any execution:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
 The project name is automatically taken from the current directory.
 
 The general structure is:
