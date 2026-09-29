@@ -88,7 +88,9 @@ cd C:\Projects\my-ai-app
 Run:
 
 ```powershell
-create-setup .venv requirements.txt
+create-setup 
+
+# IT WILL CREATE `.venv`  & USE `requirements.txt` FOR INSTALLTION OF PAKAGES BY DEAFULT
 ```
 
 Result:
@@ -111,7 +113,7 @@ The command performs these operations:
 # 3. Command Syntax
 
 ```powershell
-create-setup <venv-name> <requirements-file>
+create-setup <venv-name>[OPTIONAL] <requirements-file>[OPTIONAL]
 ```
 
 ### Example
@@ -188,11 +190,8 @@ or:
 create-setup .venv-test requirements-test.txt
 ```
 
-The file is passed directly to:
+The file is passed directly to: pip install -r <requirements-file> for the selected env
 
-```powershell
-pip install -r <requirements-file>
-```
 
 ---
 
@@ -240,7 +239,13 @@ git --version
 
 Clone the repository:
 
+
+
 ```powershell
+open cmd
+cd \
+mkdir venvs
+cd venvs
 git clone https://github.com/himanshuclub88/scripts.git
 ```
 
@@ -310,7 +315,7 @@ C:\venvs\scripts
 
 ---
 
-# 9. Add PATH Using PowerShell
+### ALternate Appoarch USING CUI (Add PATH Using PowerShell)
 
 You can also add the directory to the user's PATH from PowerShell.
 
@@ -334,7 +339,7 @@ Close PowerShell and open a new PowerShell window after changing PATH.
 
 ---
 
-# 10. Verify the Installation
+# 9. Verify the Installation
 
 Open a **new** PowerShell window.
 
@@ -366,7 +371,7 @@ If this command returns the path to `create-setup.cmd`, the global command is av
 
 ---
 
-# 11. First Test
+# 10. First Test
 
 Create or open a test Python project:
 
@@ -397,23 +402,23 @@ and install `requests`.
 
 ---
 
-# 12. Activating the Environment
+# 11. Activating the Environment
 
 The utility creates the environment and installs the dependencies.
 
 To activate the environment in your current PowerShell session, run:
 
-```powershell
-C:\venvs\<project-name>\.venv\Scripts\Activate.ps1
+```text
+The Location of env : C:\venvs\<project-name>\.venv\Scripts\Activate.ps1
 ```
 
 For example:
 
 ```powershell
-C:\venvs\test-python-project\.venv\Scripts\Activate.ps1
+create-setup
 ```
 
-After activation, PowerShell normally displays the environment name:
+After activation, PowerShell/CMD normally displays the environment name:
 
 ```text
 (.venv) PS C:\Projects\test-python-project>
@@ -442,7 +447,7 @@ Keeping it outside the source directory can be useful when:
 - the project is stored in Google Drive or another synchronized folder
 - the project is stored in Git
 - you frequently recreate environments
-- you want to avoid accidentally committing `.venv`
+- you want to avoid installing time i.e very on shared drive `.venv`
 - you want a central location for local Python environments
 
 For example:
@@ -485,117 +490,7 @@ The environment will be recreated from the requirements file.
 
 ---
 
-# 15. Recovery After Windows Reinstallation
 
-The utility is designed to be easy to restore.
-
-Keep a copy of this repository somewhere outside the computer, such as:
-
-- GitHub
-- another computer
-- external storage
-- cloud storage
-
-After reinstalling Windows:
-
-### Step 1 — Install Python
-
-```powershell
-python --version
-```
-
-### Step 2 — Restore the utility
-
-Restore:
-
-```text
-C:\venvs\scripts\
-```
-
-with:
-
-```text
-create-setup.ps1
-create-setup.cmd
-README.md
-```
-
-### Step 3 — Add the scripts directory to PATH
-
-Add:
-
-```text
-C:\venvs\scripts
-```
-
-to the User PATH.
-
-### Step 4 — Open a new PowerShell
-
-Verify:
-
-```powershell
-where.exe create-setup
-```
-
-Expected:
-
-```text
-C:\venvs\scripts\create-setup.cmd
-```
-
-### Step 5 — Restore a project environment
-
-Go to the project:
-
-```powershell
-cd C:\Projects\my-ai-app
-```
-
-Run:
-
-```powershell
-create-setup .venv requirements.txt
-```
-
-The environment is recreated from the project's dependency file.
-
----
-
-# 16. What Should Be Stored in Git?
-
-Recommended repository structure:
-
-```text
-create-setup/
-│
-├── create-setup.ps1
-├── create-setup.cmd
-├── README.md
-└── LICENSE
-```
-
-Do **not** commit generated virtual environments:
-
-```text
-.venv/
-venv/
-env/
-```
-
-Also do not commit:
-
-```text
-.env
-*.key
-*.pem
-credentials.json
-service-account.json
-```
-
-or other files containing passwords, API keys, tokens, private keys, or credentials.
-
----
 
 # 17. Troubleshooting
 
