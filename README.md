@@ -1,207 +1,283 @@
-# create-setup
+# ⚡ create-setup
 
-A lightweight Windows PowerShell utility for quickly creating and managing Python virtual environments outside your project directory.
+### Fast Python Virtual Environments for Shared-Drive Projects
 
-The goal is simple:
+`create-setup` is a lightweight Windows utility for creating and activating Python virtual environments without storing the environment inside your project directory.
 
-```powershell
-create-setup .venv requirements.txt
-```
-
-Instead of manually running several commands for every Python project, this utility creates the virtual environment, upgrades `pip`, and installs the project's dependencies from a requirements file.
+It is especially useful when your Python projects are stored on a **network/shared drive**.
 
 ---
 
-## Features
+# 🤔 Why Do We Need This?
 
-- Create Python virtual environments with one command
-- Keep virtual environments outside the project directory
-- Automatically use the current directory name as the project name
-- Support multiple virtual environments for the same project
-- Support different requirements files
-- Available globally from any PowerShell directory
-- Simple Windows/PowerShell setup
-- No Python package installation required for the utility itself
-
----
-
-# 1. How It Works
-
-Suppose your project is:
-
-```text
-C:\Projects\my-ai-app
-```
-
-Run:
+Creating a Python virtual environment is normally very easy:
 
 ```powershell
-create-setup .venv requirements.txt
+python -m venv .venv
 ```
 
-The utility creates:
+So why use another utility?
 
-```text
-C:\venvs\my-ai-app\.venv
-```
+The problem is **where the virtual environment is created**.
 
-and installs the dependencies from:
-
-```text
-C:\Projects\my-ai-app\requirements.txt
-```
-
-
-Alawys do before using (one time only) recomended any execution:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-```
-
-The project name is automatically taken from the current directory.
-
-The general structure is:
-
-```text
-Current project directory
-        │
-        ├── requirements.txt
-        │
-        └── source code
-        │
-        ▼
-C:\venvs\<project-name>\<venv-name>
-```
-
-This keeps the virtual environment separate from the source-code directory.
-
----
-
-# 2. Basic Usage
-
-Go to a Python project:
-
-```powershell
-cd C:\Projects\my-ai-app
-```
-
-Run:
-
-```powershell
-create-setup 
-
-# IT WILL CREATE `.venv`  & USE `requirements.txt` FOR INSTALLTION OF PAKAGES BY DEAFULT
-```
-
-Result:
-
-```text
-C:\venvs\my-ai-app\.venv
-```
-
-The command performs these operations:
-
-```text
-1. Detect current project name
-2. Create the virtual environment
-3. Upgrade pip
-4. Install packages from requirements.txt
-```
-
----
-
-# 3. Command Syntax
-
-```powershell
-create-setup <venv-name>[OPTIONAL] <requirements-file>[OPTIONAL]
-```
-
-### Example
-
-```powershell
-create-setup .venv requirements.txt
-```
-
-### Another example
-
-```powershell
-create-setup .venv1 requirements2.txt
-```
-
-For a project called `my-ai-app`, this creates:
-
-```text
-C:\venvs\my-ai-app\.venv1
-```
-
-and installs:
-
-```text
-requirements2.txt
-```
-
----
-
-# 4. Multiple Environments
-
-You can create multiple environments for the same project.
-
-Example:
-
-```powershell
-create-setup .venv requirements.txt
-create-setup .venv-dev requirements-dev.txt
-create-setup .venv-test requirements-test.txt
-```
-
-Result:
-
-```text
-C:\venvs\
-└── my-ai-app\
-    ├── .venv\
-    ├── .venv-dev\
-    └── .venv-test\
-```
-
-This can be useful when a project has different dependency sets for development, testing, experimentation, or other purposes.
-
----
-
-# 5. Requirements Files
-
-The second argument can be any requirements file that exists in the current project directory.
+A Python virtual environment is not just one file. It contains a large number of files and directories.
 
 For example:
 
-```powershell
-create-setup .venv requirements.txt
+```text
+.venv\
+├── Scripts\
+├── Lib\
+│   └── site-packages\
+│       ├── package1\
+│       ├── package2\
+│       ├── package3\
+│       └── ...
+└── ...
 ```
 
-or:
+When the project is located on a **local SSD**, this usually isn't a problem.
 
-```powershell
-create-setup .venv-dev requirements-dev.txt
-```
-
-or:
-
-```powershell
-create-setup .venv-test requirements-test.txt
-```
-
-The file is passed directly to: pip install -r <requirements-file> for the selected env
-
+But when the project is located on a **network/shared drive**, creating or extracting a virtual environment can become extremely slow.
 
 ---
 
-# 6. Prerequisites
+## 🐌 The Shared-Drive Problem
 
-Before using the utility, install Python.
+Imagine a shared drive that is being used by **30+ people**.
 
-Verify Python:
+Downloading a file from the shared drive might be reasonably fast.
 
-```powershell
+But extracting/unzipping a Python environment is different.
+
+The extraction process may need to create **thousands of individual files and directories** over the network.
+
+So instead of:
+
+```text
+Download one large file
+        ↓
+Fast
+```
+
+you effectively get:
+
+```text
+Create file
+   ↓
+Network request
+   ↓
+Create another file
+   ↓
+Network request
+   ↓
+Create another file
+   ↓
+Network request
+   ↓
+... thousands of times
+```
+
+On a busy shared/network drive, this can become extremely slow.
+
+In some environments, creating/extracting a Python virtual environment can take **30–40 minutes or more**.
+
+---
+
+# 💡 The Solution
+
+The idea behind `create-setup` is simple:
+
+> **Keep your project wherever you want, but keep the Python environment on the local machine.**
+
+For example, your project may be on a shared drive:
+
+```text
+Shared Drive
+│
+└── Projects
+    └── my-ai-project
+        ├── main.py
+        ├── requirements.txt
+        └── ...
+```
+
+Instead of creating:
+
+```text
+Shared Drive
+│
+└── Projects
+    └── my-ai-project
+        └── .venv      ← ❌ thousands of files on network
+```
+
+`create-setup` creates the environment locally:
+
+```text
+Shared Drive
+│
+└── Projects
+    └── my-ai-project
+        ├── main.py
+        ├── requirements.txt
+        └── ...
+
+
+Local Machine
+│
+└── C:\venvs
+    └── my-ai-project
+        └── .venv      ← ✅ local
+```
+
+This means the source code can remain on the shared drive while the virtual environment is created on the local machine.
+
+---
+
+# 🚀 Only Two Commands
+
+The whole workflow is built around two commands:
+
+```text
+create-setup
+```
+
+and:
+
+```text
+activate-venv
+```
+
+Both commands work from:
+
+* ✅ Command Prompt (CMD)
+* ✅ PowerShell
+
+---
+
+# 1️⃣ `create-setup`
+
+Use this command when you want to **create a Python environment for a project**.
+
+Go to your project:
+
+```cmd
+cd X:\Shared\Projects\my-ai-project
+```
+
+Then run:
+
+```cmd
+create-setup
+```
+
+The utility automatically:
+
+```text
+1. Detects the project name
+2. Creates the environment locally
+3. Creates the Python virtual environment
+4. Upgrades pip
+5. Installs packages from requirements.txt
+```
+
+For example:
+
+```text
+Project:
+
+X:\Shared\Projects\my-ai-project
+
+
+        create-setup
+              │
+              ▼
+
+
+Local environment:
+
+C:\venvs\my-ai-project\.venv
+```
+
+Your project remains on the shared drive.
+
+The heavy virtual-environment files stay on the local machine.
+
+---
+
+# 2️⃣ `activate-venv`
+
+Once the environment has been created, use:
+
+```cmd
+activate-venv
+```
+
+The utility finds the environment belonging to the current project and activates it.
+
+For example:
+
+```cmd
+cd X:\Shared\Projects\my-ai-project
+activate-venv
+```
+
+You should then see something similar to:
+
+```text
+(.venv) X:\Shared\Projects\my-ai-project>
+```
+
+Now you can work normally:
+
+```cmd
+python main.py
+```
+
+or:
+
+```cmd
+pip list
+```
+
+---
+
+# 🔄 Daily Workflow
+
+You only need to create the environment once.
+
+### First time
+
+```cmd
+cd X:\Shared\Projects\my-ai-project
+
+create-setup
+
+activate-venv
+```
+
+### Every day after that
+
+```cmd
+cd X:\Shared\Projects\my-ai-project
+
+activate-venv
+```
+
+You **do not need to run `create-setup` every time**.
+
+---
+
+# 📦 Installation
+
+You only need to configure the utility **once**.
+
+## Step 1 — Install Python
+
+Make sure Python is installed:
+
+```cmd
 python --version
 ```
 
@@ -211,411 +287,352 @@ Example:
 Python 3.11.x
 ```
 
-Verify pip:
-
-```powershell
-python -m pip --version
-```
-
-Verify PowerShell:
-
-```powershell
-$PSVersionTable.PSVersion
-```
-
-Git is only required if you want to clone this repository from GitHub.
-
-Verify Git:
-
-```powershell
-git --version
-```
-
 ---
 
-# 7. Installation
-
-## Option A — Clone the Repository
+## Step 2 — Get the Utility
 
 Clone the repository:
 
-
-
-```powershell
-open cmd
-cd \
+```cmd
+cd C:\
 mkdir venvs
 cd venvs
+
 git clone https://github.com/himanshuclub88/scripts.git
 ```
 
-Enter the repository:
-
-```powershell
-cd scripts
-```
-
-The repository contains the utility files:
+The utility should be available under:
 
 ```text
-create-setup.ps1
-create-setup.cmd
-README.md
+C:\venvs\scripts
 ```
 
-For the current implementation, place the utility files in:
+The important files are:
 
 ```text
 C:\venvs\scripts\
+├── create-setup.cmd
+├── create-setup.ps1
+├── activate-venv.cmd
+├── activate-venv.ps1
+└── README.md
 ```
 
-so that the resulting structure is:
-
-```text
-C:\venvs\
-└── scripts\
-    ├── create-setup.ps1
-    ├── create-setup.cmd
-    └── README.md
-```
+> The `.cmd` and `.ps1` files are implementation details. As a user, you only need to remember `create-setup` and `activate-venv`.
 
 ---
 
-# 8. Add the Utility to Windows PATH
+# 🔧 Step 3 — Add to PATH
 
-Adding the scripts directory to PATH allows this:
+To use the commands from any project directory, add:
 
-```powershell
-create-setup .venv requirements.txt
+```text
+C:\venvs\scripts
 ```
 
-to work from any directory.
+to your Windows **User PATH**.
 
-### Using the Windows GUI
+### Windows
 
-1. Open Windows Search.
-2. Search for:
-   `Environment Variables`
-3. Select:
-   `Edit the system environment variables`.
-4. Click:
-   `Environment Variables...`
-5. Under **User variables**, select `Path`.
-6. Click **Edit**.
-7. Click **New**.
+1. Open **Windows Search**
+2. Search for **Environment Variables**
+3. Open **Edit the system environment variables**
+4. Click **Environment Variables**
+5. Under **User variables**, select `Path`
+6. Click **Edit**
+7. Click **New**
 8. Add:
 
 ```text
 C:\venvs\scripts
 ```
 
-9. Click **OK** on all dialogs.
-10. Close PowerShell.
-11. Open a new PowerShell window.
+9. Click **OK**
+10. Close your CMD/PowerShell window
+11. Open a new CMD/PowerShell window
 
 ---
 
-### ALternate Appoarch USING CUI (Add PATH Using PowerShell)
+# 🔍 Step 4 — Verify
 
-You can also add the directory to the user's PATH from PowerShell.
+Run:
 
-First inspect the existing user PATH:
-
-```powershell
-[Environment]::GetEnvironmentVariable("Path", "User")
+```cmd
+where create-setup
 ```
 
-To add the directory:
-
-```powershell
-$path = [Environment]::GetEnvironmentVariable("Path", "User")
-$newPath = $path + ";C:\venvs\scripts"
-[Environment]::SetEnvironmentVariable("Path", $newPath, "User")
-```
-
-Close PowerShell and open a new PowerShell window after changing PATH.
-
-> Avoid repeatedly running the command above because it can add duplicate PATH entries.
-
----
-
-# 9. Verify the Installation
-
-Open a **new** PowerShell window.
-
-Check that the directory is in PATH:
-
-```powershell
-$env:Path -split ';'
-```
-
-Look for:
-
-```text
-C:\venvs\scripts
-```
-
-Then check that Windows can find the command:
-
-```powershell
-where.exe create-setup
-```
-
-Expected result:
+You should see:
 
 ```text
 C:\venvs\scripts\create-setup.cmd
 ```
 
-If this command returns the path to `create-setup.cmd`, the global command is available.
+Then:
+
+```cmd
+where activate-venv
+```
+
+You should see:
+
+```text
+C:\venvs\scripts\activate-venv.cmd
+```
+
+If both commands return a path, you're ready to go.
 
 ---
 
-# 10. First Test
+# 🐍 Example: Shared Drive Project
 
-Create or open a test Python project:
+Suppose your company project is located here:
 
-```powershell
-mkdir C:\Projects\test-python-project
-cd C:\Projects\test-python-project
+```text
+\\SharedDrive\Projects\DataEngineering\customer-project
 ```
 
-Create a requirements file:
+Go to the project:
 
-```powershell
-"requests" | Set-Content requirements.txt
+```cmd
+cd \\SharedDrive\Projects\DataEngineering\customer-project
+```
+
+Your project contains:
+
+```text
+customer-project\
+├── src\
+├── main.py
+├── requirements.txt
+└── ...
 ```
 
 Run:
 
-```powershell
-create-setup .venv requirements.txt
-```
-
-The utility should create:
-
-```text
-C:\venvs\test-python-project\.venv
-```
-
-and install `requests`.
-
----
-
-# 11. Activating the Environment
-
-The utility creates the environment and installs the dependencies.
-
-To activate the environment in your current PowerShell session, run:
-
-```text
-The Location of env : C:\venvs\<project-name>\.venv\Scripts\Activate.ps1
-```
-
-For example:
-
-```powershell
+```cmd
 create-setup
 ```
 
-After activation, PowerShell/CMD normally displays the environment name:
+The utility creates the environment locally:
 
 ```text
-(.venv) PS C:\Projects\test-python-project>
+C:\venvs\
+└── customer-project\
+    └── .venv
 ```
 
-You can then run:
+The dependencies are installed locally.
 
-```powershell
-python --version
+Your source code stays on the shared drive.
+
+Then activate:
+
+```cmd
+activate-venv
+```
+
+Now you can work with the project normally.
+
+---
+
+# 🔀 Multiple Environments
+
+You can create multiple environments for the same project.
+
+For example:
+
+```cmd
+create-setup .venv-dev requirements-dev.txt
 ```
 
 and:
 
-```powershell
-pip list
+```cmd
+create-setup .venv-test requirements-test.txt
 ```
+
+This can result in:
+
+```text
+C:\venvs\
+└── customer-project\
+    ├── .venv
+    ├── .venv-dev
+    └── .venv-test
+```
+
+When you run:
+
+```cmd
+activate-venv
+```
+
+the utility can detect the available environments and let you choose the one you want.
 
 ---
 
-# 13. Why Keep the Virtual Environment Outside the Project?
+# 📝 Custom Requirements
 
-A Python virtual environment can contain many files.
+The default command:
 
-Keeping it outside the source directory can be useful when:
+```cmd
+create-setup
+```
 
-- the project is stored in Google Drive or another synchronized folder
-- the project is stored in Git
-- you frequently recreate environments
-- you want to avoid installing time i.e very on shared drive `.venv`
-- you want a central location for local Python environments
+uses:
+
+```text
+.venv
+requirements.txt
+```
+
+You can specify both:
+
+```cmd
+create-setup .venv-dev requirements-dev.txt
+```
 
 For example:
 
 ```text
-Project:
-C:\Projects\my-ai-app
-
-Environment:
-C:\venvs\my-ai-app\.venv
+my-project\
+├── requirements.txt
+├── requirements-dev.txt
+├── requirements-test.txt
+└── main.py
 ```
 
-The source repository remains smaller and cleaner.
+You can create separate environments for different dependency sets.
 
 ---
 
-# 14. Recreating an Environment
+# 📁 Where Does the Environment Go?
 
-If an environment becomes corrupted, delete it and recreate it.
+The project name is detected automatically from the current directory.
 
-For example:
-
-```powershell
-Remove-Item -Recurse -Force C:\venvs\my-ai-app\.venv
-```
-
-Then go back to the project:
-
-```powershell
-cd C:\Projects\my-ai-app
-```
-
-Run:
-
-```powershell
-create-setup .venv requirements.txt
-```
-
-The environment will be recreated from the requirements file.
-
----
-
-
-
-# 17. Troubleshooting
-
-## `create-setup` is not recognized
-
-Run:
-
-```powershell
-where.exe create-setup
-```
-
-If nothing is returned, check that:
+For:
 
 ```text
-C:\venvs\scripts
+X:\Shared\Projects\my-ai-project
 ```
 
-is in PATH.
-
-Then close PowerShell and open a new PowerShell window.
-
----
-
-## `where.exe create-setup` returns nothing
-
-Check that the command file exists:
-
-```powershell
-Test-Path C:\venvs\scripts\create-setup.cmd
-```
-
-It should return:
+the environment is stored at:
 
 ```text
-True
+C:\venvs\my-ai-project\.venv
 ```
 
-If it returns `False`, verify the file location.
+The general structure is:
 
----
+```text
+<Project Location>
+        │
+        │
+        ▼
+my-ai-project
+├── source code
+├── requirements.txt
+└── ...
 
-## Python is not recognized
 
-Run:
+        +
+        │
+        │ create-setup
+        ▼
 
-```powershell
-python --version
-```
 
-If Python is not found, install Python and ensure the Python executable is available through PATH.
-
----
-
-## `requirements.txt` cannot be found
-
-Make sure you are inside the project directory:
-
-```powershell
-Get-Location
-```
-
-Then check:
-
-```powershell
-Get-ChildItem requirements*.txt
-```
-
-Run the command using the correct requirements filename.
-
----
-
-# 18. Quick Reference
-
-### Create default environment
-
-```powershell
-create-setup .venv requirements.txt
-```
-
-### Create another environment
-
-```powershell
-create-setup .venv1 requirements2.txt
-```
-
-### Check command location
-
-```powershell
-where.exe create-setup
-```
-
-### Check Python
-
-```powershell
-python --version
-```
-
-### Check pip
-
-```powershell
-python -m pip --version
-```
-
-### Check current directory
-
-```powershell
-Get-Location
-```
-
-### Activate an environment
-
-```powershell
-C:\venvs\<project-name>\.venv\Scripts\Activate.ps1
-```
-
-### Deactivate
-
-```powershell
-deactivate
+C:\venvs\
+└── my-ai-project\
+    └── .venv
 ```
 
 ---
 
-# License
+# ⚡ Quick Reference
 
-Add the project's chosen open-source license here.
+| Task                      | Command                                       |
+| ------------------------- | --------------------------------------------- |
+| Create environment        | `create-setup`                                |
+| Activate environment      | `activate-venv`                               |
+| Create custom environment | `create-setup .venv-dev`                      |
+| Use custom requirements   | `create-setup .venv-dev requirements-dev.txt` |
+| Find create command       | `where create-setup`                          |
+| Find activate command     | `where activate-venv`                         |
+| Check Python              | `python --version`                            |
+| Deactivate                | `deactivate`                                  |
 
-For example, this project can use the MIT License if that is the license selected by the repository owner.
+---
+
+# 🎯 In One Example
+
+If your project is on a shared drive:
+
+```cmd
+cd X:\Shared\Projects\my-project
+```
+
+Create the environment:
+
+```cmd
+create-setup
+```
+
+Activate it:
+
+```cmd
+activate-venv
+```
+
+That's the entire workflow.
+
+```text
+        SHARED DRIVE
+             │
+             │  Source Code
+             ▼
+      ┌───────────────┐
+      │  my-project   │
+      │               │
+      │ main.py       │
+      │ requirements  │
+      └───────┬───────┘
+              │
+              │ create-setup
+              ▼
+       LOCAL MACHINE
+      ┌───────────────┐
+      │   C:\venvs    │
+      │               │
+      │ my-project    │
+      │    └─ .venv   │
+      └───────────────┘
+              │
+              │ activate-venv
+              ▼
+          👨‍💻 CODE
+```
+
+### The main idea
+
+**Your code can live on the shared drive.
+Your Python environment stays local.**
+
+That avoids the unnecessary overhead of creating thousands of virtual-environment files across a busy network/shared drive.
+
+---
+
+# 🚀 Two Commands. One Simple Workflow.
+
+```cmd
+create-setup
+```
+
+**Create the environment.**
+
+```cmd
+activate-venv
+```
+
+**Start using the environment.**
+
+That's it.
